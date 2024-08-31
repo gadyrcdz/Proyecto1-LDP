@@ -155,6 +155,7 @@ int fuap(char* filename, struct JsonInfo** head) {
         }
         
     }
+    
 
     // Liberar la memoria
     cJSON_Delete(jsonArray);
@@ -163,6 +164,15 @@ int fuap(char* filename, struct JsonInfo** head) {
     
 } 
 
+// imprime patogenos
+void imprimirAllJSON(struct JsonInfo* head) {
+    struct JsonInfo* temp = head;
+
+    while (temp != NULL) {
+        printf("Venta ID: %d, Fecha:%s, ID de producto:%d, Nombre de producto:%s, Categoria:%s, Cantidad:%d, Precio unitario:%d, Total:  %d\n", temp->venta_id, temp->fecha, temp->producto_id,temp->producto_nombre,temp->categoria,temp->cantidad,temp->precio_unitario,temp->total);
+        temp = temp->next;
+    }
+}
 
 void importarDatos(struct JsonInfo** head) {
     char* filename = (char*)malloc(100 * sizeof(char)); // Nombre del archivo JSON
@@ -175,14 +185,17 @@ void importarDatos(struct JsonInfo** head) {
     while ((c = getchar()) != '\n' && c != EOF) {}
 
     fuap(filename, head);
- 
-    // Lógica para la importación de datos
+    // Liberacion de memoria del file
     free(filename);
+    
 }
 
 
-void procesarDatos() {
+
+
+void procesarDatos( struct JsonInfo* headlist) {
     printf("Procesando datos...\n");
+    imprimirAllJSON(headlist);
     // Lógica para el procesamiento de datos
 }
 
@@ -230,7 +243,7 @@ int main() {
                 importarDatos(&contenidoJSON);
                 break;
             case 2:
-                procesarDatos();
+                procesarDatos(contenidoJSON);
                 break;
             case 3:
                 analizarDatos();
