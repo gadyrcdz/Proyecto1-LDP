@@ -19,13 +19,17 @@ struct JsonInfo {
 };
 
 // nodos de patogeno
-struct JsonInfo* AgregarinfoJson(int venta_id,char* fecha,int producto_id,char* producto_nombre,char* categoria,int cantidad,int precio_unitario,int total) {
+struct JsonInfo*    AgregarinfoJson(int venta_id,char* fecha,int producto_id,char* producto_nombre,char* categoria,int cantidad,int precio_unitario,int total) {
     struct JsonInfo* nuevoJson = (struct JsonInfo*)malloc(sizeof(struct JsonInfo));
+    int notFoundN = -1;
     if (nuevoJson == NULL) {
         printf("Error al asignar memoria.\n");
         exit(1);
     }
     //Asifnacion de la fecha del JSON al struct 
+    if(strcmp(fecha, "NOT")==0){
+       printf("No se incluye el apartado de FECHA!!\n");
+    }
     nuevoJson->fecha = malloc(strlen(fecha) + 1);
     if (nuevoJson->fecha == NULL) {
         printf("Date not found.\n");
@@ -33,6 +37,9 @@ struct JsonInfo* AgregarinfoJson(int venta_id,char* fecha,int producto_id,char* 
     }
     strcpy(nuevoJson->fecha, fecha);
     //Asignacion de producto nombre al Struct
+    if(strcmp(producto_nombre, "NOT")==0){
+       printf("No se incluye el apartado de PRODUCTO_NOMBRE!!\n");
+    }
     nuevoJson->producto_nombre = malloc(strlen(producto_nombre) + 1);
     if (nuevoJson->producto_nombre == NULL) {
         printf("Producto_nombre not found.\n");
@@ -40,6 +47,9 @@ struct JsonInfo* AgregarinfoJson(int venta_id,char* fecha,int producto_id,char* 
     }
     strcpy(nuevoJson->producto_nombre, producto_nombre);
     //Asignacion de categoria al struct
+    if(strcmp(categoria, "NOT")==0){
+       printf("No se incluye el apartado de CATEGORIA!! \n");
+    }
     nuevoJson->categoria = malloc(strlen(categoria) + 1);
     if (nuevoJson->categoria == NULL) {
         printf("categoria not found.\n");
@@ -47,15 +57,41 @@ struct JsonInfo* AgregarinfoJson(int venta_id,char* fecha,int producto_id,char* 
     }
     strcpy(nuevoJson->categoria, categoria);
     //asignacion de venta id al struct
-    nuevoJson->venta_id = venta_id;
+    if(venta_id == 0){
+        nuevoJson->venta_id = notFoundN;
+        printf("No se incluye el apartado de VENTA_ID!!\n");
+    }else{
+        nuevoJson->venta_id = venta_id;
+    }
+    
     //asignacion del producto id al struct
-    nuevoJson->producto_id = producto_id;
+    if(producto_id == 0){
+        nuevoJson->producto_id = notFoundN;
+        printf("No se incluye el apartado de PRODUCTO_ID!!\n");
+    }else{
+        nuevoJson->producto_id = producto_id;
+    }
     //asignacion de la cantidad al struct
-    nuevoJson->cantidad = cantidad;
+    if(cantidad == 0){
+        nuevoJson->cantidad = notFoundN;
+        printf("No se incluye el apartado de CANTIDAD!!\n");
+    }else{
+        nuevoJson->cantidad = cantidad;
+    }
     //Asignacion del precio unitario al struct
-    nuevoJson->precio_unitario = precio_unitario;
+    if(precio_unitario == 0){
+        nuevoJson->precio_unitario = notFoundN;
+        printf("No se incluye el apartado de PRECIO_UNITARIO!!\n");
+    }else{
+        nuevoJson->precio_unitario = precio_unitario;
+    }
     //asignacion del total al struct
-    nuevoJson->total = total;
+    if(total == 0){
+        nuevoJson->total = notFoundN;
+        printf("No se incluye el apartado de TOTAL!!\n");
+    }else{
+        nuevoJson->total = total;
+    }
     //
     nuevoJson->next = NULL;
     return nuevoJson;
@@ -137,22 +173,72 @@ int fuap(char* filename, struct JsonInfo** head) {
 
     // Iterar sobre los elementos del array JSON
     int arraySize = cJSON_GetArraySize(jsonArray);
+    int valor;
+    int valor2;
+    int valor3;
+    int valor4;
+    int valor5;
+    char* notVal;
+    char* notVal2;
+    char* notVal3;
     for (int i = 0; i < arraySize; i++) {
-        cJSON *item = cJSON_GetArrayItem(jsonArray, i);
 
+        printf("Informacion del bloque JSON %d\n", i+1);
+        cJSON *item = cJSON_GetArrayItem(jsonArray, i);
         cJSON *venta_id = cJSON_GetObjectItem(item, "venta_id");
+        if(venta_id == NULL){
+            valor = 0;
+        }else{
+            valor = venta_id->valueint;
+        }
         cJSON *fecha = cJSON_GetObjectItem(item, "fecha");
+        if(fecha == NULL){
+            notVal = "NOT";
+        }else{
+            notVal = fecha->valuestring;
+        }
         cJSON *producto_id = cJSON_GetObjectItem(item, "producto_id");
+        if(producto_id == NULL){
+            valor2 = 0;
+        }else{
+            valor2 = producto_id->valueint;
+        }
         cJSON *producto_nombre = cJSON_GetObjectItem(item, "producto_nombre");
+        if(producto_nombre == NULL){
+            notVal2 = "NOT";
+        }else{
+            notVal2 = producto_nombre->valuestring;
+        }
         cJSON *categoria = cJSON_GetObjectItem(item, "categoria");
+        if(categoria == NULL){
+            notVal3 = "NOT";
+        }else{
+            notVal3 = categoria->valuestring;
+        }
         cJSON *cantidad = cJSON_GetObjectItem(item, "cantidad");
+        if(cantidad == NULL){
+            valor3 = 0;
+        }else{
+            valor3 = cantidad->valueint;
+        }
         cJSON *precio_unitario = cJSON_GetObjectItem(item, "precio_unitario");
+        if(precio_unitario == NULL){
+            valor4 = 0;
+        }else{
+            valor4 = precio_unitario->valueint;
+        }
         cJSON *total = cJSON_GetObjectItem(item, "total");
+        if(total == NULL){
+            valor5 = 0;
+        }else{
+            valor5 = total->valueint;
+        }
 
         // Imprimir los valores
-        if(agregarJSONLISTA(head,venta_id->valueint,fecha->valuestring,producto_id->valueint, producto_nombre->valuestring,categoria->valuestring, cantidad->valueint, precio_unitario->valuedouble,total->valuedouble)== 0){
+        if(agregarJSONLISTA(head,valor,notVal,valor2,notVal2,notVal3,valor3, valor4,valor5)== 0){
             printf("Info JSON agregada con exito!\n");
         }
+        
         
     }
     
