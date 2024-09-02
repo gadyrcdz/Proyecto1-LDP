@@ -4,6 +4,8 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
+#include <math.h> 
+#include <limits.h>
 
 
 struct JsonInfo {
@@ -18,8 +20,9 @@ struct JsonInfo {
     struct JsonInfo* next;
 };
 
-// nodos de patogeno
-struct JsonInfo*    AgregarinfoJson(int venta_id,char* fecha,int producto_id,char* producto_nombre,char* categoria,int cantidad,int precio_unitario,int total) {
+/////////////////////////////////////////////////IMPORTACION DE DATOS/////////////////////////////////////////////////////////////////////////////////////
+// nodos de JSON
+struct JsonInfo* AgregarinfoJson(int venta_id,char* fecha,int producto_id,char* producto_nombre,char* categoria,int cantidad,int precio_unitario,int total) {
     struct JsonInfo* nuevoJson = (struct JsonInfo*)malloc(sizeof(struct JsonInfo));
     int notFoundN = -1;
     if (nuevoJson == NULL) {
@@ -236,13 +239,11 @@ int fuap(char* filename, struct JsonInfo** head) {
 
         // Imprimir los valores
         if(agregarJSONLISTA(head,valor,notVal,valor2,notVal2,notVal3,valor3, valor4,valor5)== 0){
-            printf("Info JSON agregada con exito!\n");
+            printf("Info JSON agregada con exito!\n");  
         }
         
         
     }
-    
-
     // Liberar la memoria
     cJSON_Delete(jsonArray);
     free(jsonString);
@@ -250,7 +251,7 @@ int fuap(char* filename, struct JsonInfo** head) {
     
 } 
 
-// imprime patogenos
+// imprime structs de json
 void imprimirAllJSON(struct JsonInfo* head) {
     struct JsonInfo* temp = head;
 
@@ -275,12 +276,86 @@ void importarDatos(struct JsonInfo** head) {
     free(filename);
     
 }
+/////////////////////////////////////////////PROCESAR DATOS/////////////////////////////////////////////////////////////////////////////////////////
+void eliminarDuplicados(struct JsonInfo* head) {
+    struct JsonInfo* current = head;
+    struct JsonInfo* prev = NULL;
 
+    while (current != NULL) {
+        struct JsonInfo* temp = current->next;
+        prev = current;
+
+        while (temp != NULL) {
+            if (current->venta_id == temp->venta_id) {
+                // Si hay un duplicado, imprimir el ID del registro que será eliminado
+                printf("Duplicado encontrado y eliminado: Venta ID %d\n", temp->venta_id);
+
+                // Eliminar el nodo duplicado
+                prev->next = temp->next;
+                free(temp->fecha);
+                free(temp->producto_nombre);
+                free(temp->categoria);
+                free(temp);
+                temp = prev->next;
+            } else {
+                prev = temp;
+                temp = temp->next;
+            }
+        }
+
+        current = current->next;
+    }
+}
 
 
 
 void procesarDatos( struct JsonInfo* headlist) {
-    printf("Procesando datos...\n");
+
+    char input[10];
+    int opcion;
+
+     do {
+        printf("\n=== Menu de Procesamiento de Datos ===\n");
+        printf("1. Completar datos faltantes con moda\n");
+        printf("2. Completar datos faltantes con mediana\n");
+        printf("3. Eliminar Datos Duplicados\n");
+        printf("4. Mostar Contenido\n");
+        printf("5. Regresar\n");
+        printf("Seleccione una opcion: ");
+        
+        // Leer la entrada como una cadena
+        fgets(input, sizeof(input), stdin);
+
+        // Intentar convertir la entrada a un número entero
+        if (sscanf(input, "%d", &opcion) != 1) {
+            printf("Entrada no válida. Por favor, ingrese un número.\n");
+            continue;  // Volver a mostrar el menú
+        }
+
+        switch (opcion) {
+            case 1:
+                
+                break;
+            case 2:
+                
+                break;
+            case 3:
+                eliminarDuplicados(headlist);
+                break;
+
+            case 4:
+                // Imprimir los datos procesados
+                imprimirAllJSON(headlist);
+                break;
+            case 5:
+                return;
+                
+            default:
+                printf("Opción no válida. Intente nuevamente.\n");
+        }
+    } while (opcion != 6);
+
+
     imprimirAllJSON(headlist);
     // Lógica para el procesamiento de datos
 }
