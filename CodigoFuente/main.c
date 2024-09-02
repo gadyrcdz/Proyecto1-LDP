@@ -255,6 +255,9 @@ int fuap(char* filename, struct JsonInfo** head) {
 void imprimirAllJSON(struct JsonInfo* head) {
     struct JsonInfo* temp = head;
 
+    if(temp == NULL){
+        printf("No se han ingresado datos!!\n");
+    }
     while (temp != NULL) {
         printf("Venta ID: %d, Fecha:%s, ID de producto:%d, Nombre de producto:%s, Categoria:%s, Cantidad:%d, Precio unitario:%d, Total:  %d\n", temp->venta_id, temp->fecha, temp->producto_id,temp->producto_nombre,temp->categoria,temp->cantidad,temp->precio_unitario,temp->total);
         temp = temp->next;
@@ -310,7 +313,44 @@ void eliminarDuplicados(struct JsonInfo* head) {
 
 
 
+// Calcula la media de un campo específico en la lista
+double calcularMedia(struct JsonInfo* head, int isCantidad) {
+    struct JsonInfo* temp = head;
+    int suma = 0;
+    int contador = 0;
 
+    while (temp != NULL) {
+        if (isCantidad) {
+            suma += temp->cantidad;
+        } else {
+            suma += temp->precio_unitario;
+        }
+        contador++;
+        temp = temp->next;
+    }
+
+    return (contador > 0) ? (double)suma / contador : 0.0;
+}
+
+void completarDatosFaltantes(struct JsonInfo* head) {
+    struct JsonInfo* temp = head;
+
+    // Calcular media para cantidad y precio_unitario
+    double mediaCantidad = calcularMedia(head, 1);
+    double mediaPrecioUnitario = calcularMedia(head, 0);
+
+    while (temp != NULL) {
+        if (temp->cantidad == -1) {
+            printf("Cantidad faltante encontrada en venta ID %d. Completando con la media: %f\n", temp->venta_id, mediaCantidad);
+            temp->cantidad = (int)round(mediaCantidad);
+        }
+        if (temp->precio_unitario == -1) {
+            printf("Precio unitario faltante encontrado en venta ID %d. Completando con la media: %f\n", temp->venta_id, mediaPrecioUnitario);
+            temp->precio_unitario = (int)round(mediaPrecioUnitario);
+        }
+        temp = temp->next;
+    }
+}
 
 
 // Función para encontrar la moda en un campo específico
@@ -325,13 +365,14 @@ int calcularModa(struct JsonInfo* head, int isCantidad) {
             valor = temp->cantidad;
         } else {
             valor = temp->precio_unitario;
-        }     
+        }
         // Incrementar la frecuencia del valor
         if (valor != -1) {  // Ignorar valores que fueron marcados como faltantes
             frecuencia[valor]++;
-        } 
+        }
         temp = temp->next;
     }
+
     // Encontrar el valor con mayor frecuencia
     int moda = -1;
     int maxFrecuencia = -1;
@@ -348,7 +389,6 @@ int calcularModa(struct JsonInfo* head, int isCantidad) {
 
 void completarDatosFaltantesConModa(struct JsonInfo* head) {
     struct JsonInfo* temp = head;
-
     // Calcular moda para cantidad y precio_unitario
     int modaCantidad = calcularModa(head, 1);
     int modaPrecioUnitario = calcularModa(head, 0);
@@ -366,8 +406,7 @@ void completarDatosFaltantesConModa(struct JsonInfo* head) {
     }
 }
 
-
-void procesarDatos( struct JsonInfo* headlist) {
+void procesarDatos(struct JsonInfo* headlist) {
 
     char input[10];
     int opcion;
@@ -411,16 +450,54 @@ void procesarDatos( struct JsonInfo* headlist) {
             default:
                 printf("Opción no válida. Intente nuevamente.\n");
         }
-    } while (opcion != 6);
+    } while (opcion);
 
-
-    imprimirAllJSON(headlist);
-    // Lógica para el procesamiento de datos
 }
+////////////////////ANALISIS DE DATOS/////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void analizarDatos() {
-    printf("Analizando datos...\n");
-    // Lógica para el análisis de datos
+void analizarDatos(struct JsonInfo* headlist) {
+    char input[10];
+    int opcion;
+
+     do {
+        printf("\n=== Menu de Analisis de Datos ===\n");
+        printf("1. Total de Ventas\n");
+        printf("2. Total de Ventas Mensuales\n");
+        printf("3. Total de Ventas Anuales\n");
+        printf("4. Mostar Contenido\n");
+        printf("5. Regresar\n");
+        printf("Seleccione una opcion: ");
+        
+        // Leer la entrada como una cadena
+        fgets(input, sizeof(input), stdin);
+
+        // Intentar convertir la entrada a un número entero
+        if (sscanf(input, "%d", &opcion) != 1) {
+            printf("Entrada no válida. Por favor, ingrese un número.\n");
+            continue;  // Volver a mostrar el menú
+        }
+
+        switch (opcion) {
+            case 1:
+                break;
+            case 2:
+                
+                break;
+            case 3:
+                
+                break;
+
+            case 4:
+                // Imprimir los datos procesados
+                imprimirAllJSON(headlist);
+                break;
+            case 5:
+                return;
+                
+            default:
+                printf("Opción no válida. Intente nuevamente.\n");
+        }
+    } while (opcion);
 }
 
 void analisisTemporal() {
