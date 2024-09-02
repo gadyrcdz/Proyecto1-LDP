@@ -309,6 +309,64 @@ void eliminarDuplicados(struct JsonInfo* head) {
 
 
 
+
+
+
+
+// Función para encontrar la moda en un campo específico
+int calcularModa(struct JsonInfo* head, int isCantidad) {
+    // se crea un arreglo para almacenar la frecuencia de cada valor
+    int frecuencia[1000] = {0};  // segun sea el valor, va a estar entre 0 y 999
+    struct JsonInfo* temp = head;
+    int valor;
+
+    while (temp != NULL) {
+        if (isCantidad) {
+            valor = temp->cantidad;
+        } else {
+            valor = temp->precio_unitario;
+        }     
+        // Incrementar la frecuencia del valor
+        if (valor != -1) {  // Ignorar valores que fueron marcados como faltantes
+            frecuencia[valor]++;
+        } 
+        temp = temp->next;
+    }
+    // Encontrar el valor con mayor frecuencia
+    int moda = -1;
+    int maxFrecuencia = -1;
+    for (int i = 0; i < 1000; i++) {
+        if (frecuencia[i] > maxFrecuencia) {
+            maxFrecuencia = frecuencia[i];
+            moda = i;
+        }
+    }
+
+    return moda;
+}
+
+
+void completarDatosFaltantesConModa(struct JsonInfo* head) {
+    struct JsonInfo* temp = head;
+
+    // Calcular moda para cantidad y precio_unitario
+    int modaCantidad = calcularModa(head, 1);
+    int modaPrecioUnitario = calcularModa(head, 0);
+
+    while (temp != NULL) {
+        if (temp->cantidad == -1) {
+            printf("Cantidad faltante encontrada en venta ID %d. Completando con la moda: %d\n", temp->venta_id, modaCantidad);
+            temp->cantidad = modaCantidad;
+        }
+        if (temp->precio_unitario == -1) {
+            printf("Precio unitario faltante encontrado en venta ID %d. Completando con la moda: %d\n", temp->venta_id, modaPrecioUnitario);
+            temp->precio_unitario = modaPrecioUnitario;
+        }
+        temp = temp->next;
+    }
+}
+
+
 void procesarDatos( struct JsonInfo* headlist) {
 
     char input[10];
@@ -334,10 +392,10 @@ void procesarDatos( struct JsonInfo* headlist) {
 
         switch (opcion) {
             case 1:
-                
+                completarDatosFaltantesConModa(headlist);
                 break;
             case 2:
-                
+                completarDatosFaltantes(headlist);
                 break;
             case 3:
                 eliminarDuplicados(headlist);
