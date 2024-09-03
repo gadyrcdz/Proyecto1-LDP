@@ -5,8 +5,11 @@
 #include <math.h>
 #include <limits.h>
 #include <time.h>
+#include <hpdf.h>
 #include "cJSON.h"
 
+
+#define MAX_CATEGORIAS 100
 
 struct JsonInfo {
     int venta_id;
@@ -38,6 +41,12 @@ struct DiaVenta ventasPorDia[7] = {
     {"VIERNES", 0}, {"SABADO", 0}, {"DOMINGO", 0}
 };
 
+
+
+struct Categoria {
+    char* nombre;
+    int ventas_totales;
+};
 
 
 
@@ -936,6 +945,63 @@ void analisisTemporal(struct JsonInfo* headlist,struct Mes* meses) {
 
 }
 
+//////////////////ESTADISTICAS////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Función para agregar o actualizar ventas en la lista de categorías
+
+/// @brief 
+/// @param categorias 
+/// @param num_categorias 
+/// @param nombre_categoria 
+/// @param monto 
+void agregarVentaCategoria(struct Categoria categorias[], int* num_categorias, const char* nombre_categoria, int monto) {
+    for (int i = 0; i < *num_categorias; i++) {
+        if (strcmp(categorias[i].nombre, nombre_categoria) == 0) {
+            categorias[i].ventas_totales += monto;
+            return;
+        }
+    }
+
+    // Si la categoría no existe, agregarla
+    if (*num_categorias < MAX_CATEGORIAS) {
+        categorias[*num_categorias].nombre = strdup(nombre_categoria);
+        categorias[*num_categorias].ventas_totales = monto;
+        (*num_categorias)++;
+    } else {
+        printf("Número máximo de categorías alcanzado.\n");
+    }
+}
+
+// Comparador para qsort
+int compararCategorias(const void* a, const void* b) {
+    return ((struct Categoria*)b)->ventas_totales - ((struct Categoria*)a)->ventas_totales;
+}
+
+
+
+// Función para mostrar el top 5 categorías
+void mostrarTop5Categorias(struct JsonInfo* head) {
+    struct Categoria categorias[MAX_CATEGORIAS];
+    int num_categorias = 0;
+
+    struct JsonInfo* temp = head;
+    while (temp != NULL) {
+        agregarVentaCategoria(categorias, &num_categorias, temp->categoria, temp->total);
+        temp = temp->next;
+    }
+
+    // Ordenar las categorías por ventas totales
+    qsort(categorias, num_categorias, sizeof(struct Categoria), compararCategorias);
+
+    // Mostrar el top 5
+    printf("Top 5 categorías con mayores ventas:\n");
+    for (int i = 0; i < 5 && i < num_categorias; i++) {
+        printf("%d. %s: %d\n", i + 1, categorias[i].nombre, categorias[i].ventas_totales);
+        free(categorias[i].nombre); // Liberar memoria asignada
+    }
+}
+
+
+
 void estadisticas() {
     printf("Generando estadísticas...\n");
     // Lógica para generar estadísticas
@@ -980,7 +1046,7 @@ int main() {
                 analisisTemporal(contenidoJSON, mesesAnalisis);
                 break;
             case 5:
-                estadisticas();
+                 mostrarTop5Categorias(contenidoJSON);
                 break;
             case 6:
                 printf("Saliendo del programa...\n");
