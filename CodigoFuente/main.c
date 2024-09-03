@@ -52,7 +52,6 @@ struct Categoria {
 
 /////////////////////////////////////////////////IMPORTACION DE DATOS/////////////////////////////////////////////////////////////////////////////////////
 // nodos de JSON
-
 /// @brief 
 struct JsonInfo* AgregarinfoJson(int venta_id,char* fecha,int producto_id,char* producto_nombre,char* categoria,int cantidad,int precio_unitario,int total) {
     struct JsonInfo* nuevoJson = (struct JsonInfo*)malloc(sizeof(struct JsonInfo));
@@ -132,6 +131,69 @@ struct JsonInfo* AgregarinfoJson(int venta_id,char* fecha,int producto_id,char* 
     return nuevoJson;
 }
 
+// Función para crear un objeto JSON a partir de JsonInfo
+cJSON* CrearJsonObject(struct JsonInfo* info) {
+    cJSON* item = cJSON_CreateObject();
+    if (item == NULL) {
+        printf("No se pudo crear el objeto JSON.\n");
+        return NULL;
+    }
+
+    cJSON_AddNumberToObject(item, "venta_id", info->venta_id);
+    cJSON_AddStringToObject(item, "fecha", info->fecha);
+    cJSON_AddNumberToObject(item, "producto_id", info->producto_id);
+    cJSON_AddStringToObject(item, "producto_nombre", info->producto_nombre);
+    cJSON_AddStringToObject(item, "categoria", info->categoria);
+    cJSON_AddNumberToObject(item, "cantidad", info->cantidad);
+    cJSON_AddNumberToObject(item, "precio_unitario", info->precio_unitario);
+    cJSON_AddNumberToObject(item, "total", info->total);
+
+    return item;
+}
+
+// Función para guardar varios JsonInfo en un archivo JSON como un array
+void GuardarInfoJson(struct JsonInfo* lista, const char* nombre_archivo) {
+    // Crear el objeto JSON array principal
+    cJSON* root = cJSON_CreateArray();
+    if (root == NULL) {
+        printf("No se pudo crear el objeto JSON array.\n");
+        return;
+    }
+
+    // Iterar sobre la lista de JsonInfo y agregar cada uno al array
+    struct JsonInfo* current = lista;
+    while (current != NULL) {
+        cJSON* item = CrearJsonObject(current);
+        if (item != NULL) {
+            cJSON_AddItemToArray(root, item);
+        }
+        current = current->next;
+    }
+
+    // Escribir el objeto JSON array en un archivo
+    FILE* archivo = fopen(nombre_archivo, "w");
+    if (archivo == NULL) {
+        printf("No se pudo abrir el archivo para escribir.\n");
+        cJSON_Delete(root);
+        return;
+    }
+
+    char* cadena_json = cJSON_Print(root);
+    if (cadena_json == NULL) {
+        printf("No se pudo convertir el objeto JSON a una cadena.\n");
+        fclose(archivo);
+        cJSON_Delete(root);
+        return;
+    }
+
+    fprintf(archivo, "%s", cadena_json);
+    fclose(archivo);
+    free(cadena_json);
+    cJSON_Delete(root);
+}
+
+
+
 // agrega los nodos JSON a la lista
 /// @brief 
 /// @param head 
@@ -146,6 +208,7 @@ struct JsonInfo* AgregarinfoJson(int venta_id,char* fecha,int producto_id,char* 
 /// @return 
 int agregarJSONLISTA(struct JsonInfo** head, int venta_id,char* fecha,int producto_id,char* producto_nombre,char* categoria,int cantidad,int precio_unitario,int total) {
     struct JsonInfo* newJsonInfo = AgregarinfoJson(venta_id,fecha,producto_id,producto_nombre,categoria,cantidad,precio_unitario,total);
+    
     if (*head == NULL) {
         *head = newJsonInfo;
     } else {
@@ -157,7 +220,6 @@ int agregarJSONLISTA(struct JsonInfo** head, int venta_id,char* fecha,int produc
     }
     return 0;
 }
-
 
 // free obligatorio
 /// @brief 
@@ -175,9 +237,7 @@ void liberarListaPatogenos(struct JsonInfo* head) {
 }
 
 
-
 // Función para leer un archivo en una cadena
-
 /// @brief 
 /// @param filename 
 /// @return 
@@ -303,6 +363,7 @@ int fuap(char* filename, struct JsonInfo** head) {
     
 } 
 
+
 // imprime structs de json
 /// @brief 
 /// @param head 
@@ -367,9 +428,6 @@ void eliminarDuplicados(struct JsonInfo* head) {
     }
 }
 
-
-
-
 // Calcula la media de un campo específico en la lista
 /// @brief 
 /// @param head 
@@ -379,7 +437,6 @@ double calcularMedia(struct JsonInfo* head, int isCantidad) {
     struct JsonInfo* temp = head;
     int suma = 0;
     int contador = 0;
-
     while (temp != NULL) {
         if (isCantidad) {
             suma += temp->cantidad;
@@ -392,14 +449,18 @@ double calcularMedia(struct JsonInfo* head, int isCantidad) {
 
     return (contador > 0) ? (double)suma / contador : 0.0;
 }
+
 /// @brief 
 /// @param head 
 void completarDatosFaltantes(struct JsonInfo* head) {
     struct JsonInfo* temp = head;
 
+    
     // Calcular media para cantidad y precio_unitario
     double mediaCantidad = calcularMedia(head, 1);
     double mediaPrecioUnitario = calcularMedia(head, 0);
+
+    
 
     while (temp != NULL) {
         if (temp->cantidad == -1) {
@@ -416,13 +477,9 @@ void completarDatosFaltantes(struct JsonInfo* head) {
 
 
 // Función para encontrar la moda en un campo específico
-/// @brief 
-/// @param head 
-/// @param isCantidad 
-/// @return 
 int calcularModa(struct JsonInfo* head, int isCantidad) {
-    // se crea un arreglo para almacenar la frecuencia de cada valor
-    int frecuencia[1000] = {0};  // segun sea el valor, va a estar entre 0 y 999
+    // Se crea un arreglo para almacenar la frecuencia de cada valor
+    int frecuencia[1000] = {0};  // Según sea el valor, va a estar entre 0 y 999
     struct JsonInfo* temp = head;
     int valor;
 
@@ -432,10 +489,14 @@ int calcularModa(struct JsonInfo* head, int isCantidad) {
         } else {
             valor = temp->precio_unitario;
         }
-        // Incrementar la frecuencia del valor
-        if (valor != -1) {  // Ignorar valores que fueron marcados como faltantes
+
+        // Incrementar la frecuencia del valor solo si está dentro del rango válido
+        if (valor >= 0 && valor < 5000) {
             frecuencia[valor]++;
+        } else {
+            printf("Valor fuera de rango detectado: %d\n", valor);
         }
+
         temp = temp->next;
     }
 
@@ -452,10 +513,11 @@ int calcularModa(struct JsonInfo* head, int isCantidad) {
     return moda;
 }
 
-/// @brief 
-/// @param head 
+
+
 void completarDatosFaltantesConModa(struct JsonInfo* head) {
     struct JsonInfo* temp = head;
+
     // Calcular moda para cantidad y precio_unitario
     int modaCantidad = calcularModa(head, 1);
     int modaPrecioUnitario = calcularModa(head, 0);
@@ -472,6 +534,8 @@ void completarDatosFaltantesConModa(struct JsonInfo* head) {
         temp = temp->next;
     }
 }
+
+
 /// @brief 
 /// @param headlist 
 void procesarDatos(struct JsonInfo* headlist) {
@@ -498,9 +562,7 @@ void procesarDatos(struct JsonInfo* headlist) {
         }
 
         switch (opcion) {
-            case 1:
-
-
+            case 1:  
                 completarDatosFaltantesConModa(headlist);
                 break;
             case 2:
@@ -509,7 +571,6 @@ void procesarDatos(struct JsonInfo* headlist) {
             case 3:
                 eliminarDuplicados(headlist);
                 break;
-
             case 4:
                 // Imprimir los datos procesados
                 imprimirAllJSON(headlist);
@@ -577,6 +638,7 @@ char* getYear(char* fecha) {
 
     return anio;  // Retorna la cadena de caracteres que contiene el año
 }
+
 /// @brief 
 /// @param cadena 
 /// @return 
@@ -607,6 +669,7 @@ void calcularTotalMES(struct JsonInfo* head, char* mesDado){
     }
     printf("El valor total de todas las ventas en el mes %s, es de: %d\n",mesDado, total);
 }
+
 /// @brief 
 /// @param head 
 /// @param anioDado 
@@ -702,7 +765,8 @@ void analizarDatos(struct JsonInfo* headlist) {
 
  
 
-
+/// @brief 
+/// @param head 
 void mesConMayorVenta(struct JsonInfo* head) {
     int ventasPorMes[12] = {0};
     const char* meses[] = {
@@ -791,7 +855,9 @@ void calcularTasaCrecimiento(struct JsonInfo* head, int anio, int trimestre) {
 }
 
 
-
+/// @brief 
+/// @param fecha 
+/// @return 
 const char* obtenerNombreDia(const char* fecha) {
     struct tm tm = {0};
     char buffer[10];
@@ -841,7 +907,8 @@ void acumularVentasPorDia(struct JsonInfo* head, struct DiaVenta ventasPorDia[7]
 
 
 
-
+/// @brief 
+/// @param head 
 void diaMasActivo(struct JsonInfo* head) {
     double ventasPorDia[7] = {0}; // Array para almacenar las ventas por día de la semana (0=Domingo, 6=Sábado)
     struct JsonInfo* temp = head;
@@ -1013,6 +1080,22 @@ int main() {
     struct JsonInfo* contenidoJSON = NULL;
     struct Mes* mesesAnalisis = NULL;
 
+    char* filename = "datos.json";
+
+    // Comprobar si el archivo existe
+    FILE *file = fopen(filename, "r");
+    if (file != NULL) {
+        fclose(file);
+        // El archivo existe, cargar datos
+        if (fuap(filename, &contenidoJSON) == 0) {
+            printf("Datos cargados con éxito.\n");
+        }
+    } else {
+        // El archivo no existe, iniciar lista vacía
+        printf("No se encontró archivo de datos, comenzando con una lista vacía.\n");
+    }
+
+
     do {
         printf("\n=== Menu Principal ===\n");
         printf("1. Importacion de datos\n");
@@ -1035,6 +1118,7 @@ int main() {
         switch (opcion) {
             case 1:
                 importarDatos(&contenidoJSON);
+                GuardarInfoJson(contenidoJSON, "datos.json");
                 break;
             case 2:
                 procesarDatos(contenidoJSON);
