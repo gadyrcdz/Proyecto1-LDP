@@ -455,13 +455,29 @@ void procesarDatos(struct JsonInfo* headlist) {
 }
 ////////////////////ANALISIS DE DATOS/////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+int calcularTotal(struct JsonInfo* head){
+
+    struct JsonInfo* temp = head;
+    int total = 0;
+    while(temp != NULL){
+        total+=temp->total;
+        temp = temp->next;
+    }
+    printf("El valor total de todas las ventas es de: %d\n", total);
+
+
+}
+
+
+
+
 void analizarDatos(struct JsonInfo* headlist) {
     char input[10];
     int opcion;
 
      do {
         printf("\n=== Menu de Analisis de Datos ===\n");
-        printf("1. Total de Ventas\n");
+        printf("1. Total de Ventas General\n");
         printf("2. Total de Ventas Mensuales\n");
         printf("3. Total de Ventas Anuales\n");
         printf("4. Mostar Contenido\n");
@@ -479,6 +495,7 @@ void analizarDatos(struct JsonInfo* headlist) {
 
         switch (opcion) {
             case 1:
+                calcularTotal(headlist);
                 break;
             case 2:
                 
@@ -542,7 +559,7 @@ int main() {
                 procesarDatos(contenidoJSON);
                 break;
             case 3:
-                analizarDatos();
+                analizarDatos(contenidoJSON);
                 break;
             case 4:
                 analisisTemporal();
