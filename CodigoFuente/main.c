@@ -20,8 +20,19 @@ struct JsonInfo {
     struct JsonInfo* next;
 };
 
+struct Mes{
+
+    char* nombre;
+    int venta;
+    struct Mes* next;
+    
+
+};
+
 /////////////////////////////////////////////////IMPORTACION DE DATOS/////////////////////////////////////////////////////////////////////////////////////
 // nodos de JSON
+
+/// @brief 
 struct JsonInfo* AgregarinfoJson(int venta_id,char* fecha,int producto_id,char* producto_nombre,char* categoria,int cantidad,int precio_unitario,int total) {
     struct JsonInfo* nuevoJson = (struct JsonInfo*)malloc(sizeof(struct JsonInfo));
     int notFoundN = -1;
@@ -101,6 +112,17 @@ struct JsonInfo* AgregarinfoJson(int venta_id,char* fecha,int producto_id,char* 
 }
 
 // agrega los nodos JSON a la lista
+/// @brief 
+/// @param head 
+/// @param venta_id 
+/// @param fecha 
+/// @param producto_id 
+/// @param producto_nombre 
+/// @param categoria 
+/// @param cantidad 
+/// @param precio_unitario 
+/// @param total 
+/// @return 
 int agregarJSONLISTA(struct JsonInfo** head, int venta_id,char* fecha,int producto_id,char* producto_nombre,char* categoria,int cantidad,int precio_unitario,int total) {
     struct JsonInfo* newJsonInfo = AgregarinfoJson(venta_id,fecha,producto_id,producto_nombre,categoria,cantidad,precio_unitario,total);
     if (*head == NULL) {
@@ -117,6 +139,8 @@ int agregarJSONLISTA(struct JsonInfo** head, int venta_id,char* fecha,int produc
 
 
 // free obligatorio
+/// @brief 
+/// @param head 
 void liberarListaPatogenos(struct JsonInfo* head) {
     struct JsonInfo* temp;
     while (head != NULL) {
@@ -132,6 +156,10 @@ void liberarListaPatogenos(struct JsonInfo* head) {
 
 
 // Función para leer un archivo en una cadena
+
+/// @brief 
+/// @param filename 
+/// @return 
 char* readFile(const char* filename) {
     FILE *file = fopen(filename, "rb");
     if (file == NULL) {
@@ -159,7 +187,10 @@ char* readFile(const char* filename) {
 
     return content;
 }
-
+/// @brief 
+/// @param filename 
+/// @param head 
+/// @return 
 int fuap(char* filename, struct JsonInfo** head) {
     char* jsonString = readFile(filename); // Leer el archivo JSON
     if (jsonString == NULL) {
@@ -252,6 +283,8 @@ int fuap(char* filename, struct JsonInfo** head) {
 } 
 
 // imprime structs de json
+/// @brief 
+/// @param head 
 void imprimirAllJSON(struct JsonInfo* head) {
     struct JsonInfo* temp = head;
 
@@ -263,7 +296,8 @@ void imprimirAllJSON(struct JsonInfo* head) {
         temp = temp->next;
     }
 }
-
+/// @brief 
+/// @param head 
 void importarDatos(struct JsonInfo** head) {
     char* filename = (char*)malloc(100 * sizeof(char)); // Nombre del archivo JSON
  
@@ -280,6 +314,8 @@ void importarDatos(struct JsonInfo** head) {
     
 }
 /////////////////////////////////////////////PROCESAR DATOS/////////////////////////////////////////////////////////////////////////////////////////
+/// @brief 
+/// @param head 
 void eliminarDuplicados(struct JsonInfo* head) {
     struct JsonInfo* current = head;
     struct JsonInfo* prev = NULL;
@@ -314,6 +350,10 @@ void eliminarDuplicados(struct JsonInfo* head) {
 
 
 // Calcula la media de un campo específico en la lista
+/// @brief 
+/// @param head 
+/// @param isCantidad 
+/// @return 
 double calcularMedia(struct JsonInfo* head, int isCantidad) {
     struct JsonInfo* temp = head;
     int suma = 0;
@@ -331,7 +371,8 @@ double calcularMedia(struct JsonInfo* head, int isCantidad) {
 
     return (contador > 0) ? (double)suma / contador : 0.0;
 }
-
+/// @brief 
+/// @param head 
 void completarDatosFaltantes(struct JsonInfo* head) {
     struct JsonInfo* temp = head;
 
@@ -354,6 +395,10 @@ void completarDatosFaltantes(struct JsonInfo* head) {
 
 
 // Función para encontrar la moda en un campo específico
+/// @brief 
+/// @param head 
+/// @param isCantidad 
+/// @return 
 int calcularModa(struct JsonInfo* head, int isCantidad) {
     // se crea un arreglo para almacenar la frecuencia de cada valor
     int frecuencia[1000] = {0};  // segun sea el valor, va a estar entre 0 y 999
@@ -386,7 +431,8 @@ int calcularModa(struct JsonInfo* head, int isCantidad) {
     return moda;
 }
 
-
+/// @brief 
+/// @param head 
 void completarDatosFaltantesConModa(struct JsonInfo* head) {
     struct JsonInfo* temp = head;
     // Calcular moda para cantidad y precio_unitario
@@ -405,7 +451,8 @@ void completarDatosFaltantesConModa(struct JsonInfo* head) {
         temp = temp->next;
     }
 }
-
+/// @brief 
+/// @param headlist 
 void procesarDatos(struct JsonInfo* headlist) {
 
     char input[10];
@@ -431,6 +478,8 @@ void procesarDatos(struct JsonInfo* headlist) {
 
         switch (opcion) {
             case 1:
+
+
                 completarDatosFaltantesConModa(headlist);
                 break;
             case 2:
@@ -455,7 +504,12 @@ void procesarDatos(struct JsonInfo* headlist) {
 }
 ////////////////////ANALISIS DE DATOS/////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-int calcularTotal(struct JsonInfo* head){
+
+/// @brief 
+/// @param head 
+void calcularTotal(struct JsonInfo* head){
+
+    
 
     struct JsonInfo* temp = head;
     int total = 0;
@@ -464,13 +518,99 @@ int calcularTotal(struct JsonInfo* head){
         temp = temp->next;
     }
     printf("El valor total de todas las ventas es de: %d\n", total);
+}
 
 
+/// @brief 
+/// @param fecha 
+/// @return 
+const char* obtenerNombreMes(char* fecha) {
+    // Arreglo con los nombres de los meses
+    const char* meses[] = {
+        "ENERO", "FEBRERO", "MARZO", "ABRIL", "MAYO", "JUNIO", 
+        "JULIO", "AGOSTO", "SEPTIEMBRE", "OCTUBRE", "NOVIEMBRE", "DICIEMBRE"
+    };
+
+    char mes[3];  // 2 dígitos para el mes + 1 para el carácter nulo
+    strncpy(mes, fecha + 5, 2);
+    mes[2] = '\0';  // Asegurarse de que la cadena esté terminada en '\0'
+
+    int numMes = atoi(mes);  // Convertir la cadena a un entero
+
+    return meses[numMes - 1];  // Retornar el nombre del mes
+}
+
+/// @brief 
+/// @param fecha 
+/// @return 
+char* getYear(char* fecha) {
+    char* anio = (char*)malloc(5 * sizeof(char));  // 4 dígitos para el año + 1 para el carácter nulo
+    if (anio == NULL) {
+        // Manejo de errores en caso de que la memoria no se pueda asignar
+        printf("Error al asignar memoria.\n");
+        return NULL;
+    }
+
+    strncpy(anio, fecha, 4);
+    anio[4] = '\0';  // Asegurarse de que la cadena esté terminada en '\0'
+
+    return anio;  // Retorna la cadena de caracteres que contiene el año
+}
+/// @brief 
+/// @param cadena 
+/// @return 
+char* convertirAMayusculas(char* cadena) {
+    for (int i = 0; cadena[i] != '\0'; i++) {
+        cadena[i] = toupper(cadena[i]);
+    }
+    return cadena;
+}
+
+/// @brief 
+/// @param head 
+/// @param mesDado 
+void calcularTotalMES(struct JsonInfo* head, char* mesDado){
+
+    struct JsonInfo* temp = head;
+    int total = 0;
+    char* mesM = convertirAMayusculas(mesDado);
+    while(temp != NULL){
+        if(strcmp(obtenerNombreMes(temp->fecha), mesM)==0){
+            total+=temp->total;
+            temp = temp->next;
+        }else{
+            temp = temp->next;
+        }
+        
+        
+    }
+    printf("El valor total de todas las ventas en el mes %s, es de: %d\n",mesDado, total);
+}
+/// @brief 
+/// @param head 
+/// @param anioDado 
+void calcularTotalAnual(struct JsonInfo* head, char* anioDado){
+
+    struct JsonInfo* temp = head;
+    int total = 0;
+  
+    while(temp != NULL){
+        if(strcmp(getYear(temp->fecha), anioDado)==0){
+            total+=temp->total;
+            temp = temp->next;
+        }else{
+            temp = temp->next;
+        }
+        
+        
+    }
+    printf("El valor total de todas las ventas en el año de %s, es de: %d\n", anioDado, total);
 }
 
 
 
-
+/// @brief 
+/// @param headlist 
 void analizarDatos(struct JsonInfo* headlist) {
     char input[10];
     int opcion;
@@ -498,10 +638,30 @@ void analizarDatos(struct JsonInfo* headlist) {
                 calcularTotal(headlist);
                 break;
             case 2:
+
+                char* mesDado = (char*)malloc(100 * sizeof(char));
+
+                printf("Escriba el nombre del mes que desea filtrar: \n");
+                scanf("%s", mesDado);
                 
+                // Consumir el newline sobrante
+                int c;
+                while ((c = getchar()) != '\n' && c != EOF) {}
+
+                calcularTotalMES(headlist, mesDado);
                 break;
             case 3:
                 
+                char* anioDado = (char*)malloc(100 * sizeof(char));
+
+                printf("Escriba el año que desea filtrar: \n");
+                scanf("%s", anioDado);
+                
+                // Consumir el newline sobrante
+                int a;
+                while ((a = getchar()) != '\n' && a != EOF) {}
+
+                calcularTotalAnual(headlist,anioDado);
                 break;
 
             case 4:
@@ -516,10 +676,55 @@ void analizarDatos(struct JsonInfo* headlist) {
         }
     } while (opcion);
 }
+/// @brief ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/// @param headlist /
+void analisisTemporal(struct JsonInfo* headlist) {
 
-void analisisTemporal() {
-    printf("Realizando análisis temporal...\n");
-    // Lógica para el análisis temporal
+    char input[10];
+    int opcion;
+
+    do {
+        printf("\n=== Menu de Analisis de Datos ===\n");
+        printf("1. Mes con mayor venta\n");
+        printf("2. Dia mas activo\n");
+        printf("3. Calcular Crecimiento de Ventas\n");
+        printf("4. Calcular Decrecimiento de Ventas\n");
+        printf("5. Regresar\n");
+        printf("Seleccione una opcion: ");
+        
+        // Leer la entrada como una cadena
+        fgets(input, sizeof(input), stdin);
+
+        // Intentar convertir la entrada a un número entero
+        if (sscanf(input, "%d", &opcion) != 1) {
+            printf("Entrada no válida. Por favor, ingrese un número.\n");
+            continue;  // Volver a mostrar el menú
+        }
+
+        switch (opcion) {
+            case 1:
+                break;
+            case 2:
+
+               
+                break;
+            case 3:
+                
+                
+                break;
+
+            case 4:
+                // Imprimir los datos procesados
+                imprimirAllJSON(headlist);
+                break;
+            case 5:
+                return;
+                
+            default:
+                printf("Opción no válida. Intente nuevamente.\n");
+        }
+    } while (opcion);
+
 }
 
 void estadisticas() {
