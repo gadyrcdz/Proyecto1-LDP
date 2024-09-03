@@ -1,11 +1,11 @@
-
-#include <stdio.h> 
-#include "cJSON.h" 
+#include <stdio.h>
 #include <stdlib.h>
-#include <ctype.h>
 #include <string.h>
-#include <math.h> 
+#include <ctype.h>
+#include <math.h>
 #include <limits.h>
+#include <time.h>
+#include "cJSON.h"
 
 
 struct JsonInfo {
@@ -26,8 +26,20 @@ struct Mes{
     int venta;
     struct Mes* next;
     
-
 };
+
+struct DiaVenta {
+    char* nombreDia; // Nombre del día de la semana
+    int totalVentas;    // Total de ventas del día
+};
+
+struct DiaVenta ventasPorDia[7] = {
+    {"LUNES", 0}, {"MARTES", 0}, {"MIERCOLES", 0}, {"JUEVES", 0},
+    {"VIERNES", 0}, {"SABADO", 0}, {"DOMINGO", 0}
+};
+
+
+
 
 /////////////////////////////////////////////////IMPORTACION DE DATOS/////////////////////////////////////////////////////////////////////////////////////
 // nodos de JSON
@@ -676,9 +688,200 @@ void analizarDatos(struct JsonInfo* headlist) {
         }
     } while (opcion);
 }
-/// @brief ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/////////////////////////////////ANALISIS TEMPORAL///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+ 
+
+
+void mesConMayorVenta(struct JsonInfo* head) {
+    int ventasPorMes[12] = {0};
+    const char* meses[] = {
+        "ENERO", "FEBRERO", "MARZO", "ABRIL", "MAYO", "JUNIO", 
+        "JULIO", "AGOSTO", "SEPTIEMBRE", "OCTUBRE", "NOVIEMBRE", "DICIEMBRE"
+    };
+    struct JsonInfo* temp = head;
+
+    while (temp != NULL) {
+        int mes = atoi(temp->fecha + 5); // Extraer el mes de la fecha en formato "YYYY-MM-DD"
+        ventasPorMes[mes - 1] += temp->total;
+        temp = temp->next;
+    }
+
+    int maxVenta = 0;
+    int mesConMaxVenta = 0;
+    for (int i = 0; i < 12; i++) {
+        if (ventasPorMes[i] > maxVenta) {
+            maxVenta = ventasPorMes[i];
+            mesConMaxVenta = i + 1;
+        }
+    }
+
+    printf("El mes con mayor venta es %s, con un total de %d\n",meses[mesConMaxVenta-1], maxVenta);
+}
+
+
+/// @brief 
+/// @param head 
+/// @param anio 
+/// @param trimestre 
+void calcularTasaCrecimiento(struct JsonInfo* head, int anio, int trimestre) {
+    int inicioMes = (trimestre - 1) * 3 + 1;
+    int finMes = inicioMes + 2;
+    double totalTrimestre = 0.0;
+
+    struct JsonInfo* temp = head;
+
+    while (temp != NULL) {
+        char mesStr[3];
+        strncpy(mesStr, temp->fecha + 5, 2);
+        mesStr[2] = '\0'; // Null-terminar la cadena
+        int mes = atoi(mesStr);
+        int anioVenta = atoi(temp->fecha);
+
+        if (anioVenta == anio && mes >= inicioMes && mes <= finMes) {
+            totalTrimestre += temp->total;
+        }
+        temp = temp->next;
+    }
+
+    // Suponiendo que la función calcula la tasa de crecimiento entre trimestres consecutivos
+    double totalTrimestreAnterior = 0.0;
+    int inicioMesAnterior = inicioMes - 3;
+    int finMesAnterior = inicioMes - 1;
+
+    // Si el trimestre anterior es el último trimestre del año, ajustar el rango
+    if (inicioMesAnterior <= 0) {
+        inicioMesAnterior = 10; // Octubre
+        finMesAnterior = 12;    // Diciembre
+    }
+
+    temp = head;
+
+    while (temp != NULL) {
+        char mesStr[3];
+        strncpy(mesStr, temp->fecha + 5, 2);
+        mesStr[2] = '\0'; // Null-terminar la cadena
+        int mes = atoi(mesStr);
+        int anioVenta = atoi(temp->fecha);
+
+        if (anioVenta == anio && mes >= inicioMesAnterior && mes <= finMesAnterior) {
+            totalTrimestreAnterior += temp->total;
+        }
+        temp = temp->next;
+    }
+
+    double tasaCrecimiento = 0.0;
+    if (totalTrimestreAnterior != 0) {
+        tasaCrecimiento = ((totalTrimestre - totalTrimestreAnterior) / totalTrimestreAnterior) * 100;
+    } else if (totalTrimestre > 0) {
+        tasaCrecimiento = 100.0; // Si el trimestre anterior no tiene ventas, asumimos un crecimiento del 100%
+    }
+
+    printf("La tasa de crecimiento o decrecimiento en el trimestre %d del año %d es: %.2f%%\n", trimestre, anio, tasaCrecimiento);
+}
+
+
+
+const char* obtenerNombreDia(const char* fecha) {
+    struct tm tm = {0};
+    char buffer[10];
+    int anio, mes, dia;
+
+    // Extraer el año, mes y día de la fecha
+    sscanf(fecha, "%d-%d-%d", &anio, &mes, &dia);
+
+    // Rellenar la estructura tm
+    tm.tm_year = anio - 1900; // Año desde 1900
+    tm.tm_mon = mes - 1;     // Mes desde 0
+    tm.tm_mday = dia;        // Día del mes
+    tm.tm_hour = 0;         // Hora a 0
+    tm.tm_min = 0;          // Minuto a 0
+    tm.tm_sec = 0;          // Segundo a 0
+
+    // Obtener el nombre del día de la semana
+    mktime(&tm); // Normalizar la estructura tm
+    strftime(buffer, sizeof(buffer), "%A", &tm);
+
+    // Devolver el nombre del día de la semana
+    return strdup(buffer);
+}
+
+
+/// @brief 
+/// @param head 
+/// @param ventasPorDia 
+void acumularVentasPorDia(struct JsonInfo* head, struct DiaVenta ventasPorDia[7]) {
+    struct JsonInfo* temp = head;
+
+    while (temp != NULL) {
+        const char* nombreDia = obtenerNombreDia(temp->fecha);
+        
+        // Buscar el día en el arreglo y sumar el total de ventas
+        for (int i = 0; i < 7; i++) {
+            if (strcmp(ventasPorDia[i].nombreDia, nombreDia) == 0) {
+                ventasPorDia[i].totalVentas += temp->total;
+                break;
+            }
+        }
+        
+        temp = temp->next;
+    }
+}
+
+
+
+
+
+void diaMasActivo(struct JsonInfo* head) {
+    double ventasPorDia[7] = {0}; // Array para almacenar las ventas por día de la semana (0=Domingo, 6=Sábado)
+    struct JsonInfo* temp = head;
+
+    while (temp != NULL) {
+        struct tm tm = {0};
+        char fecha[11];
+        strncpy(fecha, temp->fecha, 10); // Copiar la fecha
+        fecha[10] = '\0'; // Asegurar que la cadena esté terminada en nulo
+
+        // Extraer el año, mes y día de la fecha
+        sscanf(fecha, "%d-%d-%d", &tm.tm_year, &tm.tm_mon, &tm.tm_mday);
+
+        // Ajustar el año y el mes
+        tm.tm_year -= 1900; // Año desde 1900
+        tm.tm_mon -= 1;     // Mes desde 0
+
+        // Obtener el día de la semana
+        mktime(&tm);
+        int diaSemana = tm.tm_wday; // 0=Domingo, 1=Lunes, ..., 6=Sábado
+
+        // Acumulamos las ventas del día de la semana correspondiente
+        ventasPorDia[diaSemana] += temp->total;
+
+        temp = temp->next;
+    }
+
+    // Encontrar el día de la semana más activo
+    int diaMasActivo = 0;
+    for (int i = 1; i < 7; ++i) {
+        if (ventasPorDia[i] > ventasPorDia[diaMasActivo]) {
+            diaMasActivo = i;
+        }
+    }
+
+    // Nombres de los días de la semana
+    const char* nombresDias[] = {"Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"};
+
+    printf("El día de la semana más activo es %s con un total de %.2f ventas.\n",
+           nombresDias[diaMasActivo], ventasPorDia[diaMasActivo]);
+}
+
+
+
+
+
+/// @brief //////////////////////////////////////////
 /// @param headlist /
-void analisisTemporal(struct JsonInfo* headlist) {
+void analisisTemporal(struct JsonInfo* headlist,struct Mes* meses) {
 
     char input[10];
     int opcion;
@@ -688,8 +891,7 @@ void analisisTemporal(struct JsonInfo* headlist) {
         printf("1. Mes con mayor venta\n");
         printf("2. Dia mas activo\n");
         printf("3. Calcular Crecimiento de Ventas\n");
-        printf("4. Calcular Decrecimiento de Ventas\n");
-        printf("5. Regresar\n");
+        printf("4. Regresar\n");
         printf("Seleccione una opcion: ");
         
         // Leer la entrada como una cadena
@@ -703,21 +905,28 @@ void analisisTemporal(struct JsonInfo* headlist) {
 
         switch (opcion) {
             case 1:
+                mesConMayorVenta(headlist);
                 break;
             case 2:
 
+                diaMasActivo(headlist);
                
                 break;
             case 3:
-                
-                
+
+                int anio, trimestre;
+                printf("Ingrese el año: ");
+                scanf("%d", &anio);
+                printf("Ingrese el trimestre (1-4): ");
+                scanf("%d", &trimestre);
+
+                // Consumir el newline sobrante
+                int c;
+                while ((c = getchar()) != '\n' && c != EOF) {}
+                calcularTasaCrecimiento(headlist, anio, trimestre);
                 break;
 
             case 4:
-                // Imprimir los datos procesados
-                imprimirAllJSON(headlist);
-                break;
-            case 5:
                 return;
                 
             default:
@@ -736,6 +945,7 @@ int main() {
     char input[10];
     int opcion;
     struct JsonInfo* contenidoJSON = NULL;
+    struct Mes* mesesAnalisis = NULL;
 
     do {
         printf("\n=== Menu Principal ===\n");
@@ -767,7 +977,7 @@ int main() {
                 analizarDatos(contenidoJSON);
                 break;
             case 4:
-                analisisTemporal();
+                analisisTemporal(contenidoJSON, mesesAnalisis);
                 break;
             case 5:
                 estadisticas();
